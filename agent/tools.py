@@ -1,0 +1,64 @@
+from langchain.tools import tool
+from data import users_data
+from dotenv import load_dotenv
+from objects import PurchaseItem
+from datetime import date
+from pathlib import Path
+import logging
+
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(env_path)
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format="%(asctime)s | %(levelname)s | %(message)s "
+)
+
+@tool
+def get_user_purchase_history(user: str) -> dict:
+    """this tool takes the user username and returns a dict of the user purchase history if the user exists"""
+    logging.info(f"using get_user_purchase_history tool on user: {user}")
+    if users_data.get(user):
+        return users_data[user]
+    return {"status": "there was no username found"}
+
+@tool
+def calculate_right_refund(user:str, items:list[PurchaseItem])-> str:
+    """ this tool takes a list of the items to be returned and the username 
+    and will return hum much the refund is worth"""
+
+    logging.info("using calculate right refund tool to get user's: {user} refund")
+
+    if users_data.get(user):
+        total_refund = 0 
+        
+        #users_data[user] retrieves the user's entire purchase dictionary.
+        for item in items:
+            if users_data[user].get(item.name):
+                total_refund += users_data[user][item.name]["price"]
+            
+        return f"the value of the refund is : {total_refund}"
+
+    return {"status": "there was no username found"}    
+    
+@tool 
+def issue_refund_ticket(user:str,  refund_amount: int) -> str:
+    """ this tool will send ticket to the right team to return the refund"""
+
+    logging.info(f"using issue refund ticket for user: {user}")
+    return f"a refund ticket has been issued successfully with the amount of {refund_amount}"
+
+@tool
+def get_today_date(users:str) -> str:
+    """ this tool will return today's date """
+    logging.info(f"using the date tool")
+    return date.today()
+
+# print(get_user_purchase_history.invoke("user123"))
+
+# book = PurchaseItem(name="book")
+# pen = PurchaseItem(name="pen")
+# print(calculate_right_refund.invoke({"user":"user123",
+#                                      "items":[book,pen]}))
+# print(issue_refund_ticket.invoke({"user":"user123", "refund_amount":30}))
+# print(get_today_date.invoke("user123"))
